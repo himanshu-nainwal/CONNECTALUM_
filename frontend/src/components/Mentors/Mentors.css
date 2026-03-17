@@ -1,0 +1,27 @@
+.mentors-wrapper { }
+.mentors-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; flex-wrap: wrap; }
+.mentors-controls .search-bar { flex: 1; min-width: 200px; }
+.mentors-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.mentor-card { padding: 24px; display: flex; flex-direction: column; gap: 8px; }
+.mentor-avatar {
+  width: 52px; height: 52px; border-radius: 50%; margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.3rem; font-weight: 800;
+}
+.mentor-name { font-size: 1rem; font-weight: 700; }
+.mentor-info { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); }
+.mentor-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.skill-badge { font-size: 0.75rem !important; }
+.mentor-grad { margin-top: 4px; }
+.mentor-connect { margin-top: 8px; align-self: flex-start; }
+@media (max-width: 900px) { .mentors-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 540px) { .mentors-grid { grid-template-columns: 1fr; } }
+
+.mentor-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.connected-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.78rem; font-weight: 600; color: #10b981;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+  border-radius: 999px; padding: 3px 10px;
+}

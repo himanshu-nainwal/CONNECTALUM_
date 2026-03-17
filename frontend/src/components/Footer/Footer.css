@@ -1,0 +1,23 @@
+.footer { background: var(--bg-dark); color: rgba(255,255,255,0.7); padding: 60px 0 0; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; padding-bottom: 48px; }
+.footer-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 1.2rem; font-weight: 800;
+  color: white; margin-bottom: 12px;
+}
+.footer-brand p { font-size: 0.9rem; line-height: 1.7; max-width: 260px; }
+.footer-socials { display: flex; gap: 12px; margin-top: 20px; }
+.footer-socials a {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.6); transition: all 0.2s;
+}
+.footer-socials a:hover { background: var(--primary); color: white; }
+.footer-links h4 { color: white; font-family: var(--font-display); margin-bottom: 16px; }
+.footer-links a { display: block; margin-bottom: 10px; font-size: 0.9rem; transition: color 0.2s; }
+.footer-links a:hover { color: white; }
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08); padding: 20px 0;
+  font-size: 0.85rem; text-align: center;
+}
+@media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr; } }

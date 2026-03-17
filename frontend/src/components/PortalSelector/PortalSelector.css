@@ -1,0 +1,283 @@
+.portal-selector {
+  padding: 5rem 0 4rem;
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.portal-selector::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 50%, rgba(99,102,241,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(245,158,11,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ps-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.ps-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.ps-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(99,102,241,0.1);
+  color: var(--color-primary);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.ps-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+  line-height: 1.15;
+}
+
+.ps-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Cards layout */
+.ps-cards {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* Individual card */
+.ps-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ps-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+}
+
+.ps-student:hover { border-color: rgba(99,102,241,0.5); }
+.ps-alumni:hover  { border-color: rgba(245,158,11,0.5); }
+
+.ps-dimmed { opacity: 0.55; filter: grayscale(0.3); }
+
+/* Glow */
+.ps-card-glow {
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.25;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.ps-card:hover .ps-card-glow { opacity: 0.45; }
+.glow-blue  { background: radial-gradient(circle, #6366f1, transparent); }
+.glow-amber { background: radial-gradient(circle, #f59e0b, transparent); }
+
+/* Card header row */
+.ps-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ps-icon-wrap {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.icon-blue  { background: rgba(99,102,241,0.12); color: #6366f1; }
+.icon-amber { background: rgba(245,158,11,0.12);  color: #f59e0b; }
+
+.ps-role-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.tag-blue  { color: #6366f1; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.08); }
+.tag-amber { color: #d97706; border-color: rgba(245,158,11,0.3);  background: rgba(245,158,11,0.08); }
+
+/* Card text */
+.ps-card-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.ps-card-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Features list */
+.ps-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+}
+
+.ps-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.ps-student .ps-feature svg { color: #6366f1; flex-shrink: 0; }
+.ps-alumni  .ps-feature svg { color: #f59e0b; flex-shrink: 0; }
+
+/* Buttons */
+.ps-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.btn-student {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+}
+.btn-student:hover {
+  background: linear-gradient(135deg, #5355e8, #4338ca);
+  box-shadow: 0 6px 28px rgba(99,102,241,0.5);
+  transform: translateY(-1px);
+}
+
+.btn-alumni {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.35);
+}
+.btn-alumni:hover {
+  background: linear-gradient(135deg, #fbbf24, #b45309);
+  box-shadow: 0 6px 28px rgba(245,158,11,0.5);
+  transform: translateY(-1px);
+}
+
+/* Divider */
+.ps-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+  gap: 12px;
+}
+
+.ps-divider-line {
+  flex: 1;
+  width: 1.5px;
+  background: var(--border-color);
+  min-height: 60px;
+}
+
+.ps-divider-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--bg-primary);
+  padding: 6px 0;
+  white-space: nowrap;
+}
+
+/* Note at bottom */
+.ps-note {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+
+.ps-note-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+.ps-note-link:hover { opacity: 0.8; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ps-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .ps-divider {
+    flex-direction: row;
+    padding: 0;
+  }
+
+  .ps-divider-line {
+    flex: 1;
+    width: auto;
+    height: 1.5px;
+    min-height: unset;
+  }
+
+  .ps-card { padding: 2rem 1.5rem; }
+
+  .ps-title { font-size: 1.6rem; }
+}

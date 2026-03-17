@@ -1,0 +1,13 @@
+.alumni-page { padding-top: var(--navbar-h); min-height: 100vh; }
+.alumni-hero { background: linear-gradient(135deg, #1a0a2e, #2d1f5e) !important; }
+.mentor-form-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px); z-index: 1500;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.mentor-form-modal {
+  background: var(--bg); border-radius: var(--radius-lg);
+  max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto;
+  position: relative;
+}
+.modal-close { position: absolute; top: 16px; right: 16px; }

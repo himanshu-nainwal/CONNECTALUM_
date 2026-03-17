@@ -1,0 +1,16 @@
+.mentor-form-wrap { padding: 32px; max-width: 700px; }
+.mentor-form-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 28px; }
+.mentor-form-header svg { color: var(--primary); margin-top: 4px; }
+.mentor-form-header h2 { font-size: 1.3rem; margin-bottom: 4px; }
+.mentor-form-header p { color: var(--text-muted); }
+.mentor-form { display: flex; flex-direction: column; gap: 20px; }
+.comm-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.comm-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 50px; border: 1.5px solid var(--border);
+  background: transparent; font-size: 0.85rem; cursor: pointer;
+  transition: all 0.2s; font-family: var(--font-body);
+}
+.comm-chip.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.comm-chip:hover:not(.active) { border-color: var(--border-strong); }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
