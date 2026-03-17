@@ -113,10 +113,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Internal server error" });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  httpServer.listen(port, () => {
-    console.log(`🚀 Server running on http://localhost:${port}`);
-  });
-}
-
-export default app;
+httpServer.listen(port, () => {
+  console.log(`🚀 Server running on http://localhost:${port}`);
+});
