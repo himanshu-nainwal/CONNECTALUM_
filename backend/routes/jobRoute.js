@@ -1,16 +1,31 @@
 import express from "express";
-import { createJob, getJobs, getMyJobs, deleteJob, applyToJob, getMyApplications, getApplicationsForJob, getApplicationStatus } from "../controllers/jobController.js";
-import authMiddleware from "../middleware/auth.js";
+import {
+  createJob,
+  getJobs,
+  getMyJobs,
+  deleteJob,
+  applyToJob,
+  getMyApplications,
+  getSemanticJobMatches,
+  getAlumniReferrals,
+  updateReferralStatus,
+  getReferralLeaderboard,
+} from "../controllers/jobController.js";
+import authMiddleware, { requireRole } from "../middleware/auth.js";
 
-const router = express.Router();
+const jobRouter = express.Router();
 
-router.get("/", getJobs);
-router.post("/create", authMiddleware, createJob);
-router.get("/myjobs", authMiddleware, getMyJobs);
-router.delete("/:id", authMiddleware, deleteJob);
-router.post("/apply", authMiddleware, applyToJob);
-router.get("/my-applications", authMiddleware, getMyApplications);
-router.get("/:jobId/applications", authMiddleware, getApplicationsForJob);
-router.get("/:jobId/apply-status", authMiddleware, getApplicationStatus);
+jobRouter.get("/", getJobs);
+jobRouter.get("/leaderboard", getReferralLeaderboard);
+jobRouter.get("/semantic-matches", authMiddleware, getSemanticJobMatches);
+jobRouter.get("/my-jobs", authMiddleware, getMyJobs);
+jobRouter.get("/my-applications", authMiddleware, getMyApplications);
+jobRouter.get("/alumni-referrals", authMiddleware, getAlumniReferrals);
 
-export default router;
+jobRouter.post("/", authMiddleware, requireRole("alumni", "admin", "master_admin"), createJob);
+jobRouter.delete("/:id", authMiddleware, deleteJob);
+
+jobRouter.post("/apply", authMiddleware, applyToJob);
+jobRouter.patch("/applications/:id/referral", authMiddleware, updateReferralStatus);
+
+export default jobRouter;

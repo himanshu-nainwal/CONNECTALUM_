@@ -15,7 +15,7 @@ const StoreContextProvider = ({ children }) => {
   const axiosAuth = useCallback(() => {
     return axios.create({
       baseURL: config.API_URL,
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }, [token]);
 
@@ -24,11 +24,14 @@ const StoreContextProvider = ({ children }) => {
     try {
       setUserLoading(true);
       const res = await axios.get(`${config.API_URL}/user/me`, {
-        headers: { Authorization: `Bearer ${tkn}` }
+        headers: { Authorization: `Bearer ${tkn}` },
       });
-      if (res.data.success) setUser(res.data.user);
+      if (res.data.success) {
+        setUser(res.data.user);
+        setRole(res.data.user.role);
+        localStorage.setItem("role", res.data.user.role);
+      }
     } catch {
-      // token expired
       logout();
     } finally {
       setUserLoading(false);
@@ -37,7 +40,7 @@ const StoreContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) fetchUser(token);
-  }, []);
+  }, [token, fetchUser]);
 
   const login = async (email, password) => {
     try {
@@ -57,9 +60,26 @@ const StoreContextProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password, userRole) => {
+  const sendOtp = async (email) => {
     try {
-      const res = await axios.post(`${config.API_URL}/user/register`, { name, email, password, role: userRole });
+      const res = await axios.post(`${config.API_URL}/user/send-otp`, { email });
+      return res.data;
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || "Failed to send OTP" };
+    }
+  };
+
+  const register = async ({ name, email, password, role: userRole, otp, batch, department }) => {
+    try {
+      const res = await axios.post(`${config.API_URL}/user/register`, {
+        name,
+        email,
+        password,
+        role: userRole,
+        otp,
+        batch,
+        department,
+      });
       if (res.data.success) {
         const { token: tkn, role: r, user: u } = res.data;
         localStorage.setItem("token", tkn);
@@ -84,11 +104,24 @@ const StoreContextProvider = ({ children }) => {
   };
 
   return (
-    <StoreContext.Provider value={{
-      showLogin, setShowLogin, token, role, user, setUser,
-      userLoading, login, register, logout, axiosAuth,
-      url: config.API_URL
-    }}>
+    <StoreContext.Provider
+      value={{
+        showLogin,
+        setShowLogin,
+        token,
+        role,
+        user,
+        setUser,
+        userLoading,
+        login,
+        register,
+        sendOtp,
+        logout,
+        axiosAuth,
+        url: config.API_URL,
+        socketUrl: config.SOCKET_URL,
+      }}
+    >
       {children}
     </StoreContext.Provider>
   );

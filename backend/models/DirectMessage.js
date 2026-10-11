@@ -1,11 +1,17 @@
 import mongoose from "mongoose";
 
-const directMessageSchema = new mongoose.Schema({
-  sender:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  receiver: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  text:     { type: String, required: true },
-  read:     { type: Boolean, default: false },
-}, { timestamps: true });
+const directMessageSchema = new mongoose.Schema(
+  {
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    receiver: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, default: "" },
+    attachment_url: { type: String, default: "" },
+    attachment_name: { type: String, default: "" },
+    attachment_type: { type: String, default: "" }, // e.g. "application/pdf"
+    read: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
 
 directMessageSchema.index({ sender: 1, receiver: 1 });
 

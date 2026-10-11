@@ -4,6 +4,8 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+
+// Routes
 import userRouter from "./routes/userRoute.js";
 import jobRouter from "./routes/jobRoute.js";
 import mentorRoutes from "./routes/mentorRoute.js";
@@ -13,6 +15,10 @@ import connectionRoutes from "./routes/connectionRoute.js";
 import messageRoutes from "./routes/messageRoute.js";
 import resourceRoutes from "./routes/resourceRoute.js";
 import communityRoutes from "./routes/communityRoute.js";
+import adminRouter from "./routes/adminRoute.js";
+import aiRouter from "./routes/aiRoute.js";
+import qnaRouter from "./routes/qnaRoute.js";
+import storyRouter from "./routes/storyRoute.js";
 
 dotenv.config();
 
@@ -23,7 +29,7 @@ const port = process.env.PORT || 4000;
 // Connect to MongoDB
 connectDB();
 
-// CORS config
+// CORS configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
   : ["http://localhost:5173", "http://localhost:3000"];
@@ -34,66 +40,151 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(null, true); // Allow all in dev — tighten in prod
+        callback(null, true); // Permissive in development
       }
     },
     credentials: true,
   })
 );
 
-// Socket.IO for realtime chat
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+
+// -------------------------------------------------------------
+// Socket.IO: Multi-Channel Chatrooms, Presence, Typing & DMs
+// -------------------------------------------------------------
 const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
 });
 
-const chatRooms = {};
+// In-Memory RAM Caches
+const chatRooms = {
+  general: [],
+  jobs: [],
+  "tech-talk": [],
+  events: [],
+};
+
+// Room presence: roomName -> Map(socketId -> { userName, role })
+const roomPresence = {
+  general: new Map(),
+  jobs: new Map(),
+  "tech-talk": new Map(),
+  events: new Map(),
+};
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  let currentRoom = null;
+  let currentUser = null;
 
-  socket.on("join_room", (room) => {
-    socket.join(room);
-    if (!chatRooms[room]) chatRooms[room] = [];
-    socket.emit("chat_history", chatRooms[room].slice(-50));
+  socket.on("join_room", ({ room, user }) => {
+    // Leave previous room if any
+    if (currentRoom && roomPresence[currentRoom]) {
+      socket.leave(currentRoom);
+      roomPresence[currentRoom].delete(socket.id);
+      io.to(currentRoom).emit("room_presence", {
+        room: currentRoom,
+        count: roomPresence[currentRoom].size,
+        users: Array.from(roomPresence[currentRoom].values()),
+      });
+    }
+
+    currentRoom = room || "general";
+    currentUser = user || { name: "Guest", role: "student" };
+    socket.join(currentRoom);
+
+    if (!chatRooms[currentRoom]) chatRooms[currentRoom] = [];
+    if (!roomPresence[currentRoom]) roomPresence[currentRoom] = new Map();
+
+    roomPresence[currentRoom].set(socket.id, currentUser);
+
+    // Send instant last 50 RAM-cached messages
+    socket.emit("chat_history", chatRooms[currentRoom].slice(-50));
+
+    // Broadcast updated presence
+    io.to(currentRoom).emit("room_presence", {
+      room: currentRoom,
+      count: roomPresence[currentRoom].size,
+      users: Array.from(roomPresence[currentRoom].values()),
+    });
   });
 
   socket.on("send_message", (data) => {
+    const targetRoom = data.room || "general";
     const message = {
       id: Date.now(),
       user: data.user,
+      role: data.role || "student",
       text: data.text,
       time: new Date().toISOString(),
-      room: data.room,
+      room: targetRoom,
     };
-    if (!chatRooms[data.room]) chatRooms[data.room] = [];
-    chatRooms[data.room].push(message);
-    io.to(data.room).emit("receive_message", message);
+
+    if (!chatRooms[targetRoom]) chatRooms[targetRoom] = [];
+    chatRooms[targetRoom].push(message);
+    if (chatRooms[targetRoom].length > 100) chatRooms[targetRoom].shift();
+
+    io.to(targetRoom).emit("receive_message", message);
   });
 
-  // Private DM rooms
-  socket.on("join_dm", (userId) => socket.join(`dm_${userId}`));
+  // Private DM Rooms
+  socket.on("join_dm", (userId) => {
+    socket.join(`dm_${userId}`);
+  });
 
   socket.on("send_dm", (data) => {
-    const msg = { id: Date.now(), senderId: data.senderId, senderName: data.senderName, text: data.text, time: new Date().toISOString() };
+    const msg = {
+      id: Date.now(),
+      senderId: data.senderId,
+      senderName: data.senderName,
+      text: data.text,
+      attachment_url: data.attachment_url || "",
+      attachment_name: data.attachment_name || "",
+      time: new Date().toISOString(),
+    };
     io.to(`dm_${data.receiverId}`).emit("receive_dm", msg);
     io.to(`dm_${data.senderId}`).emit("receive_dm", msg);
   });
 
+  // Live Typing Indicators
+  socket.on("typing", (data) => {
+    if (data.receiverId) {
+      io.to(`dm_${data.receiverId}`).emit("user_typing", { senderId: data.senderId, senderName: data.senderName });
+    }
+  });
+
+  socket.on("stop_typing", (data) => {
+    if (data.receiverId) {
+      io.to(`dm_${data.receiverId}`).emit("user_stop_typing", { senderId: data.senderId });
+    }
+  });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    if (currentRoom && roomPresence[currentRoom]) {
+      roomPresence[currentRoom].delete(socket.id);
+      io.to(currentRoom).emit("room_presence", {
+        room: currentRoom,
+        count: roomPresence[currentRoom].size,
+        users: Array.from(roomPresence[currentRoom].values()),
+      });
+    }
   });
 });
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-
-// Health check
+// -------------------------------------------------------------
+// REST API Routes
+// -------------------------------------------------------------
 app.get("/health", (req, res) =>
-  res.json({ status: "ok", timestamp: new Date().toISOString() })
+  res.json({
+    status: "ok",
+    service: "ConnectAlum Platform API v4.0",
+    timestamp: new Date().toISOString(),
+  })
 );
 
-// API routes
 app.use("/api/user", userRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/ai", aiRouter);
 app.use("/api/jobs", jobRouter);
 app.use("/api/mentors", mentorRoutes);
 app.use("/api/events", eventRoutes);
@@ -102,17 +193,23 @@ app.use("/api/connections", connectionRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/communities", communityRoutes);
+app.use("/api/qna", qnaRouter);
+app.use("/api/stories", storyRouter);
 
 app.get("/", (req, res) =>
-  res.json({ message: "ConnectAlum API v3.0 — MongoDB", status: "running" })
+  res.json({
+    message: "ConnectAlum: AI-Driven Alumni Mentorship, Career Referral & Community Platform",
+    status: "running",
+    version: "4.0",
+  })
 );
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({ success: false, message: "Internal server error" });
+  console.error("ConnectAlum Server Error:", err);
+  res.status(500).json({ success: false, message: err.message || "Internal server error" });
 });
 
 httpServer.listen(port, () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log(`🚀 ConnectAlum Server running on http://localhost:${port}`);
 });

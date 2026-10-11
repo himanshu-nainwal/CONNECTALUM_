@@ -1,11 +1,23 @@
 import express from "express";
-import { createResource, getResources, toggleLike, deleteResource } from "../controllers/resourceController.js";
+import {
+  createResource,
+  getResources,
+  toggleLike,
+  toggleBookmark,
+  incrementDownload,
+  flagResource,
+  deleteResource,
+} from "../controllers/resourceController.js";
 import authMiddleware from "../middleware/auth.js";
 
-const router = express.Router();
-router.get("/", getResources);
-router.post("/create", authMiddleware, createResource);
-router.post("/:id/like", authMiddleware, toggleLike);
-router.delete("/:id", authMiddleware, deleteResource);
+const resourceRouter = express.Router();
 
-export default router;
+resourceRouter.get("/", getResources);
+resourceRouter.post("/", authMiddleware, createResource);
+resourceRouter.post("/:id/like", authMiddleware, toggleLike);
+resourceRouter.post("/:id/bookmark", authMiddleware, toggleBookmark);
+resourceRouter.post("/:id/download", incrementDownload);
+resourceRouter.post("/:id/flag", authMiddleware, flagResource);
+resourceRouter.delete("/:id", authMiddleware, deleteResource);
+
+export default resourceRouter;

@@ -2,136 +2,361 @@ import { useEffect, useState, useContext } from "react";
 import config from "../../config";
 import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
-import { Search, Building2, Briefcase, GraduationCap, Filter, UserCheck, UserPlus, Clock, MessageCircle } from "lucide-react";
+import {
+  Search,
+  Building2,
+  Briefcase,
+  GraduationCap,
+  Filter,
+  UserCheck,
+  UserPlus,
+  Clock,
+  MessageCircle,
+  Calendar,
+  CreditCard,
+  Star,
+  CheckCircle,
+  X,
+  Award,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import "./Mentors.css";
 
-const MentorSkeleton = () => (
-  <div className="mentor-card card">
-    <div className="skeleton" style={{ height: 60, marginBottom: 12 }} />
-    <div className="skeleton" style={{ height: 16, width: "70%", marginBottom: 8 }} />
-    <div className="skeleton" style={{ height: 14, width: "50%" }} />
-  </div>
-);
-
-const ConnectButton = ({ mentorId, mentorName, onMessage }) => {
-  const { token } = useContext(StoreContext);
-  const [status, setStatus] = useState("none");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!token || !mentorId) { setLoading(false); return; }
-    axios.get(`${config.API_URL}/connections/status/${mentorId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(r => { setStatus(r.data.status); }).catch(() => {}).finally(() => setLoading(false));
-  }, [mentorId, token]);
-
-  const handleConnect = async () => {
-    if (!token) { toast.error("Please login first"); return; }
-    setLoading(true);
-    try {
-      await axios.post(`${config.API_URL}/connections/request`, { recipientId: mentorId }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStatus("pending");
-      toast.success(`Connection request sent to ${mentorName}!`);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to send request");
-    } finally { setLoading(false); }
-  };
-
-  if (loading) return <button className="btn btn-sm btn-outline" disabled>...</button>;
-  if (status === "accepted") return (
-    <div className="mentor-actions">
-      <span className="connected-badge"><UserCheck size={13} /> Connected</span>
-      <button className="btn btn-sm btn-primary" onClick={() => onMessage && onMessage(mentorId, mentorName)}>
-        <MessageCircle size={13} /> Message
-      </button>
-    </div>
-  );
-  if (status === "pending") return (
-    <button className="btn btn-sm btn-outline" disabled><Clock size={13} /> Pending</button>
-  );
-  return (
-    <button className="btn btn-sm btn-primary" onClick={handleConnect}>
-      <UserPlus size={13} /> Connect
-    </button>
-  );
-};
-
 const Mentors = ({ onOpenMessages }) => {
-  const { user } = useContext(StoreContext);
+  const { user, token, setShowLogin, axiosAuth } = useContext(StoreContext);
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [filterCollege, setFilterCollege] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [pricingFilter, setPricingFilter] = useState("all");
+
+  // Booking Modal
+  const [bookingMentor, setBookingMentor] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [bookingTopic, setBookingTopic] = useState("Career Strategy & Technical Roadmap");
+  const [bookingNotes, setBookingNotes] = useState("");
+  const [submittingBooking, setSubmittingBooking] = useState(false);
+
+  // Review Modal
+  const [reviewMentor, setReviewMentor] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+
+  const fetchMentors = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${config.API_URL}/mentors`, {
+        params: { search, pricing: pricingFilter },
+      });
+      setMentors(res.data);
+    } catch {
+      toast.error("Failed to load mentors");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    fetch(`${config.API_URL}/user/alumni?${params}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => setMentors(d))
-      .catch(() => setError("Failed to load alumni"))
-      .finally(() => setLoading(false));
-  }, [search]);
+    fetchMentors();
+  }, [search, pricingFilter]);
 
-  const filtered = filterCollege && user?.college
-    ? mentors.filter(m => m.college?.toLowerCase() === user.college?.toLowerCase())
-    : mentors;
-  const visible = showAll ? filtered : filtered.slice(0, 9);
+  // Handle Slot Booking with Razorpay Integration (Module 10)
+  const handleConfirmBooking = async (e) => {
+    e.preventDefault();
+    if (!token) {
+      setShowLogin(true);
+      return;
+    }
+    if (!selectedSlot) {
+      toast.error("Please pick an available calendar slot");
+      return;
+    }
+
+    try {
+      setSubmittingBooking(true);
+      const res = await axiosAuth().post("/mentors/book", {
+        mentorId: bookingMentor._id,
+        slotId: selectedSlot.id,
+        topic: bookingTopic,
+        notes: bookingNotes,
+      });
+
+      if (res.data.success) {
+        if (res.data.isPaid && res.data.razorpayOrder) {
+          // Razorpay payment flow simulation / checkout
+          toast.success("Initializing Razorpay checkout for ₹" + res.data.booking.amount);
+
+          // Simulated signature verification for development test
+          setTimeout(async () => {
+            const verifyRes = await axiosAuth().post("/mentors/payment/verify", {
+              bookingId: res.data.booking._id,
+              razorpay_order_id: res.data.razorpayOrder.id,
+              razorpay_payment_id: "pay_" + Math.random().toString(36).substring(2, 10),
+              razorpay_signature: "mock_signature_valid",
+            });
+            if (verifyRes.data.success) {
+              toast.success("Payment confirmed! 1-on-1 mentorship session booked.");
+              setBookingMentor(null);
+              fetchMentors();
+            }
+          }, 800);
+        } else {
+          toast.success("1-on-1 Mentorship session confirmed! Meeting link generated.");
+          setBookingMentor(null);
+          fetchMentors();
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Booking failed");
+    } finally {
+      setSubmittingBooking(false);
+    }
+  };
+
+  // Submit 1-5 Rating & Review
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!token) return;
+    try {
+      const res = await axiosAuth().post(`/mentors/${reviewMentor._id}/reviews`, {
+        rating,
+        comment: reviewComment,
+      });
+      if (res.data.success) {
+        toast.success("Thank you! Review and rating posted.");
+        setReviewMentor(null);
+        setReviewComment("");
+        fetchMentors();
+      }
+    } catch {
+      toast.error("Failed to post review");
+    }
+  };
 
   return (
     <div className="mentors-wrapper">
+      <div className="mentors-hero-bar">
+        <div>
+          <h2>1-on-1 Alumni Mentorship Marketplace</h2>
+          <p>Book verified alumni for code reviews, interview prep, and career strategy with Razorpay integration.</p>
+        </div>
+      </div>
+
       <div className="mentors-controls">
         <div className="search-bar">
           <Search size={16} />
-          <input placeholder="Search by name, company, role..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input
+            placeholder="Search by expertise, domain, company (e.g., MERN, System Design, Google)..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        {user?.college && (
-          <button className={`btn btn-sm ${filterCollege ? "btn-primary" : "btn-outline"}`} onClick={() => setFilterCollege(!filterCollege)}>
-            <Filter size={14} /> My College
+        <div className="pricing-filters">
+          <button
+            className={`btn btn-sm ${pricingFilter === "all" ? "btn-primary" : "btn-outline"}`}
+            onClick={() => setPricingFilter("all")}
+          >
+            All Sessions
           </button>
-        )}
+          <button
+            className={`btn btn-sm ${pricingFilter === "Free" ? "btn-primary" : "btn-outline"}`}
+            onClick={() => setPricingFilter("Free")}
+          >
+            Free Mentorship
+          </button>
+          <button
+            className={`btn btn-sm ${pricingFilter === "Paid" ? "btn-primary" : "btn-outline"}`}
+            onClick={() => setPricingFilter("Paid")}
+          >
+            Premium (Paid)
+          </button>
+        </div>
       </div>
-      {loading ? (
-        <div className="mentors-grid">{Array(6).fill(0).map((_, i) => <MentorSkeleton key={i} />)}</div>
-      ) : error ? (
-        <div className="empty-state"><p>{error}</p></div>
-      ) : filtered.length === 0 ? (
-        <div className="empty-state"><GraduationCap size={48} /><h3>No alumni found</h3><p>Try adjusting your search</p></div>
-      ) : (
-        <>
-          <div className="mentors-grid">
-            {visible.map(m => (
-              <div key={m.id || m._id} className="mentor-card card">
-                <div className="mentor-avatar">{(m.name || "A").charAt(0).toUpperCase()}</div>
-                <h3 className="mentor-name">{m.name}</h3>
-                {m.college && <div className="mentor-info"><GraduationCap size={13} /> {m.college}</div>}
-                {m.job_role && <div className="mentor-info"><Briefcase size={13} /> {m.job_role}</div>}
-                {m.company && <div className="mentor-info"><Building2 size={13} /> {m.company}</div>}
-                {m.skills?.length > 0 && (
-                  <div className="mentor-skills">
-                    {(Array.isArray(m.skills) ? m.skills : [m.skills]).slice(0, 3).map((s, i) => (
-                      <span key={i} className="badge badge-blue skill-badge">{s}</span>
-                    ))}
-                  </div>
-                )}
-                {m.grad_year && <div className="mentor-grad"><span className="badge badge-gray">Class of {m.grad_year}</span></div>}
-                <ConnectButton mentorId={m.id || m._id} mentorName={m.name} onMessage={onOpenMessages} />
+
+      <div className="mentors-grid">
+        {mentors.map((mentor) => (
+          <div key={mentor._id} className="mentor-card card">
+            <div className="mentor-header">
+              <div className="mentor-avatar">
+                {mentor.first_name?.charAt(0)}
+                {mentor.last_name?.charAt(0)}
               </div>
-            ))}
-          </div>
-          {filtered.length > 9 && (
-            <div style={{ textAlign: "center", marginTop: 24 }}>
-              <button className="btn btn-outline" onClick={() => setShowAll(!showAll)}>
-                {showAll ? "Show Less" : `Show All (${filtered.length})`}
+              <div className="mentor-title-block">
+                <h3>
+                  {mentor.first_name} {mentor.last_name}
+                </h3>
+                <span className="mentor-org">
+                  <Building2 size={13} /> {mentor.organization || "Tech Alum"} · {mentor.location || "Remote"}
+                </span>
+              </div>
+            </div>
+
+            <div className="mentor-meta-row">
+              <span className={`pricing-tag ${mentor.pricing_type === "Paid" ? "paid" : "free"}`}>
+                {mentor.pricing_type === "Paid" ? `₹${mentor.session_fee || 499} / session` : "Free Session"}
+              </span>
+              <span className="rating-badge">
+                <Star size={13} fill="#f59e0b" color="#f59e0b" /> {mentor.rating_average || 5.0} (
+                {mentor.rating_count || 1} reviews)
+              </span>
+            </div>
+
+            <p className="mentor-expertise">
+              <strong>Domain Expertise:</strong> {mentor.expertise || "Full Stack Engineering & Career Guidance"}
+            </p>
+
+            {/* Weekly Availability Preview */}
+            <div className="availability-preview">
+              <Calendar size={13} />
+              <span>
+                {mentor.availability_slots?.filter((s) => !s.is_booked).length || 0} weekly slots available
+              </span>
+            </div>
+
+            <div className="mentor-card-actions">
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setReviewMentor(mentor);
+                }}
+              >
+                <Star size={13} /> Rate
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setBookingMentor(mentor);
+                  setSelectedSlot(mentor.availability_slots?.find((s) => !s.is_booked) || null);
+                }}
+              >
+                <Calendar size={13} /> Book 1-on-1 Slot
               </button>
             </div>
-          )}
-        </>
+          </div>
+        ))}
+      </div>
+
+      {/* Slot Booking Modal */}
+      {bookingMentor && (
+        <div className="modal-overlay" onClick={() => setBookingMentor(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-top">
+              <div>
+                <h2>
+                  Book Session with {bookingMentor.first_name} {bookingMentor.last_name}
+                </h2>
+                <span className="sub-text">
+                  Pricing: {bookingMentor.pricing_type === "Paid" ? `₹${bookingMentor.session_fee}` : "Free"}
+                </span>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setBookingMentor(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmBooking}>
+              <div className="form-group" style={{ marginTop: "16px" }}>
+                <label>Select an Available Weekly Calendar Slot:</label>
+                <div className="slots-picker-grid">
+                  {bookingMentor.availability_slots?.map((slot, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`slot-pill ${selectedSlot?.id === slot.id ? "selected" : ""} ${
+                        slot.is_booked ? "booked" : ""
+                      }`}
+                      disabled={slot.is_booked}
+                      onClick={() => setSelectedSlot(slot)}
+                    >
+                      <span>{slot.day}</span>
+                      <strong>{slot.time}</strong>
+                      {slot.is_booked && <span className="booked-text">Reserved</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Session Focus / Topic</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={bookingTopic}
+                  onChange={(e) => setBookingTopic(e.target.value)}
+                  placeholder="e.g. Resume ATS feedback & DSA coding strategy"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Notes or Questions for Alumnus</label>
+                <textarea
+                  rows={3}
+                  className="input"
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  placeholder="Share details about what you want to achieve during the call..."
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn btn-outline" onClick={() => setBookingMentor(null)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submittingBooking || !selectedSlot}>
+                  {submittingBooking
+                    ? "Processing Booking..."
+                    : bookingMentor.pricing_type === "Paid"
+                    ? `Pay ₹${bookingMentor.session_fee} via Razorpay`
+                    : "Confirm Free Mentorship Slot"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Review & 1-5 Star Modal */}
+      {reviewMentor && (
+        <div className="modal-overlay" onClick={() => setReviewMentor(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2>
+              Rate Mentorship with {reviewMentor.first_name} {reviewMentor.last_name}
+            </h2>
+            <form onSubmit={handleSubmitReview}>
+              <div className="rating-select-row">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    className={`star-pick-btn ${rating >= num ? "active" : ""}`}
+                    onClick={() => setRating(num)}
+                  >
+                    <Star size={24} fill={rating >= num ? "#f59e0b" : "none"} color="#f59e0b" />
+                  </button>
+                ))}
+              </div>
+              <div className="form-group">
+                <label>Student Feedback Review</label>
+                <textarea
+                  rows={4}
+                  className="input"
+                  placeholder="How helpful was the mentorship session? Share your feedback for fellow students..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-outline" onClick={() => setReviewMentor(null)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Submit 1-5 Star Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

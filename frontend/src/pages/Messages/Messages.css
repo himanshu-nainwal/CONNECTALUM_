@@ -178,3 +178,71 @@
   .hidden-mobile { display: none; }
   .back-btn { display: flex !important; }
 }
+
+/* Live typing indicator */
+.typing-indicator-row {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Attachment Pill */
+.msg-attachment-pill {
+  margin-top: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+.msg-bubble-wrap.mine .msg-attachment-pill {
+  background: rgba(255, 255, 255, 0.2);
+}
+.msg-attachment-pill a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Attach Popover */
+.attach-popover {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 8px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.attach-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+.attach-popover input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.85rem;
+}
+.attach-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.attach-btn:hover, .attach-btn.active {
+  color: #2563eb;
+}

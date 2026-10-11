@@ -1,10 +1,21 @@
 import express from "express";
-import { addMentor, getAllMentors } from "../controllers/mentorController.js";
-import authMiddleware from "../middleware/auth.js";
+import {
+  addMentor,
+  getAllMentors,
+  bookMentorSlot,
+  verifyMentorshipPayment,
+  getMyBookings,
+  addMentorReview,
+} from "../controllers/mentorController.js";
+import authMiddleware, { requireRole } from "../middleware/auth.js";
 
-const router = express.Router();
+const mentorRouter = express.Router();
 
-router.post("/add", authMiddleware, addMentor);
-router.get("/", getAllMentors);
+mentorRouter.get("/", getAllMentors);
+mentorRouter.get("/my-bookings", authMiddleware, getMyBookings);
+mentorRouter.post("/", authMiddleware, requireRole("alumni", "admin", "master_admin"), addMentor);
+mentorRouter.post("/book", authMiddleware, bookMentorSlot);
+mentorRouter.post("/payment/verify", authMiddleware, verifyMentorshipPayment);
+mentorRouter.post("/:id/reviews", authMiddleware, addMentorReview);
 
-export default router;
+export default mentorRouter;
