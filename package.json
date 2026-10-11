@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@ngrok/ngrok": "^1.7.0",
+    "untun": "^0.2.2"
+  }
+}
